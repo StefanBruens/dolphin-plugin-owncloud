@@ -4,5 +4,5 @@ Name=OwnCloud
 
 X-KDE-ServiceTypes=FileViewVersionControlPlugin
 MimeType=text/plain;
-X-KDE-Library=fileview_oc_plugin
+X-KDE-Library=fileviewowncloudplugin
 
