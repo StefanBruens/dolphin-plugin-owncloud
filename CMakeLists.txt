@@ -21,7 +21,7 @@ set(fileviewowncloudplugin_SRCS
 kde4_add_plugin(fileviewowncloudplugin  ${fileviewowncloudplugin_SRCS})
 target_link_libraries(fileviewowncloudplugin ${KDE4_KIO_LIBS} ${LIBKONQ_LIBRARY})
 install(FILES fileviewowncloudplugin.desktop DESTINATION ${SERVICES_INSTALL_DIR})
-install(FILES fileviewowncloudpluginsettings.kcfg DESTINATION ${KCFG_INSTALL_DIR})
+# install(FILES fileviewowncloudpluginsettings.kcfg DESTINATION ${KCFG_INSTALL_DIR})
 install(TARGETS fileviewowncloudplugin DESTINATION ${PLUGIN_INSTALL_DIR})
 
 
