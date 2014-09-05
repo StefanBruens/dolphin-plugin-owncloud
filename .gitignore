@@ -4,6 +4,12 @@
 *.o
 *.obj
 
+# build directory
+build
+
+# file manager artefacts
+.directory
+
 # Compiled Dynamic libraries
 *.so
 *.dylib
