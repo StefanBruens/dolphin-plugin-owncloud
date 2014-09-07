@@ -1,6 +1,8 @@
 #include <KPluginFactory>
 #include <KPluginLoader>
+#include <KFileItem>
 #include <QDebug>
+#include <QDir>
 #include <QPointer>
 #include <QTcpSocket>
 #include <QHostAddress>
@@ -83,7 +85,37 @@ FileViewOwncloudPlugin::fileName() const
 KVersionControlPlugin2::ItemVersion
 FileViewOwncloudPlugin::itemVersion (const KFileItem &item) const
 {
-    return NormalVersion;
+    QString path = QDir(item.localPath()).canonicalPath();
+    // qDebug() << "OCP: query version for " << item.name() << " | " << path;
+
+    if (!d->ocQuerySocket->waitForConnected(1000)) {
+        return UnversionedVersion;
+    }
+
+    int tries = 5;
+    while (--tries) {
+        QString command = "RETRIEVE_FILE_STATUS:" + path + "\n";
+        d->ocQuerySocket->write(command.toUtf8());
+        d->ocQuerySocket->waitForReadyRead();
+        QByteArray answer = d->ocQuerySocket->readAll();
+
+        QList<QByteArray> lines = answer.split('\n');
+        foreach (const QByteArray& line, lines) {
+            if (line.isEmpty())
+                continue;
+
+            Private::OcMessage response(line);
+            if (response.type == Private::OcMessage::STATUS && response.path == path) {
+                if(response.status == Private::OcMessage::OK)
+                    return NormalVersion;
+                if(response.status == Private::OcMessage::SYNC)
+                    return UpdateRequiredVersion;
+                return UnversionedVersion;
+            }
+        }
+    }
+    return UnversionedVersion;
+}
 
 FileViewOwncloudPlugin::Private::OcMessage::OcMessage(const QByteArray& response)
         : type(FileViewOwncloudPlugin::Private::OcMessage::TYPE_Unknown)
