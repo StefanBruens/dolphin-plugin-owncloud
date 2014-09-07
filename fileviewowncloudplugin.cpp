@@ -35,7 +35,7 @@ FileViewOwncloudPlugin::endRetrieval()
 QString
 FileViewOwncloudPlugin::fileName() const
 {
-    return QString();
+    return ".owncloudsync.log";
 }
 
 KVersionControlPlugin2::ItemVersion
