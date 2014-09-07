@@ -1,6 +1,9 @@
 #include <KPluginFactory>
 #include <KPluginLoader>
 #include <QDebug>
+#include <QPointer>
+#include <QTcpSocket>
+#include <QHostAddress>
 
 #include "fileviewowncloudplugin.h"
 
@@ -10,6 +13,7 @@ K_EXPORT_PLUGIN(FileViewOwncloudPluginFactory("fileviewowncloudplugin"))
 class FileViewOwncloudPlugin::Private
 {
 public:
+    QPointer<QTcpSocket> ocQuerySocket;
     class OcMessage
     {
     public:
@@ -58,13 +62,16 @@ FileViewOwncloudPlugin::actions (const KFileItemList &items) const
 bool
 FileViewOwncloudPlugin::beginRetrieval (const QString &directory)
 {
+    // qDebug() << "OCP: started retrieval for " << directory;
+    d->ocQuerySocket = new QTcpSocket;
+    d->ocQuerySocket->connectToHost(QHostAddress::LocalHost, 33001, QIODevice::ReadWrite);
     return true;
 }
 
 void
 FileViewOwncloudPlugin::endRetrieval()
 {
-    return;
+    delete d->ocQuerySocket;
 }
 
 QString
