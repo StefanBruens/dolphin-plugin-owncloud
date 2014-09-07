@@ -6,12 +6,24 @@
 K_PLUGIN_FACTORY(FileViewOwncloudPluginFactory, registerPlugin<FileViewOwncloudPlugin>();)
 K_EXPORT_PLUGIN(FileViewOwncloudPluginFactory("fileviewowncloudplugin"))
 
-FileViewOwncloudPlugin::FileViewOwncloudPlugin(QObject* parent, const QList<QVariant>& args)
+class FileViewOwncloudPlugin::Private
 {
+public:
+
+};
+
+FileViewOwncloudPlugin::FileViewOwncloudPlugin(QObject* parent, const QList<QVariant>& args):
+    KVersionControlPlugin2(parent),
+    d(new Private(this))
+{
+    // qDebug() << "OCP: started oc plugin";
+
 }
 
 FileViewOwncloudPlugin::~FileViewOwncloudPlugin()
 {
+    // qDebug() << "OCP: oc plugin exit";
+    delete d;
 }
 
 QList<QAction*>

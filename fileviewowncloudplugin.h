@@ -35,6 +35,10 @@ public:
     virtual QString fileName() const;
     virtual ItemVersion itemVersion (const KFileItem &item) const;
 
+private:
+    class Private;
+    Private* d;
+
 };
 
 #endif
