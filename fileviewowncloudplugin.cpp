@@ -5,6 +5,7 @@
 #include <QDir>
 #include <QPointer>
 #include <QTcpSocket>
+#include <QTimer>
 #include <QHostAddress>
 
 #include "fileviewowncloudplugin.h"
@@ -17,11 +18,14 @@ class FileViewOwncloudPlugin::Private
 public:
     Private(FileViewOwncloudPlugin* parent)
         : ocNotifySocket(new QTcpSocket(parent))
+        , reconnectTimer(new QTimer(parent))
     {
     }
 
     QPointer<QTcpSocket> ocNotifySocket;
     QPointer<QTcpSocket> ocQuerySocket;
+    QPointer<QTimer> reconnectTimer;
+
     class OcMessage
     {
     public:
@@ -53,8 +57,14 @@ FileViewOwncloudPlugin::FileViewOwncloudPlugin(QObject* parent, const QList<QVar
 {
     // qDebug() << "OCP: started oc plugin";
 
+    qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState");
+
     connect(d->ocNotifySocket, SIGNAL(readyRead()), this, SLOT(handleOcNotify()));
+    connect(d->ocNotifySocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)),
+            this, SLOT(socketStateChanged(QAbstractSocket::SocketState)));
     d->ocNotifySocket->connectToHost(QHostAddress::LocalHost, 33001, QIODevice::ReadWrite);
+
+    connect(d->reconnectTimer, SIGNAL(timeout()), this, SLOT(reconnect()));
 }
 
 FileViewOwncloudPlugin::~FileViewOwncloudPlugin()
@@ -83,6 +93,20 @@ void FileViewOwncloudPlugin::handleOcNotify()
         if (message.type == Private::OcMessage::UPDATE_VIEW) {
             emit itemVersionsChanged();
         }
+    }
+}
+
+void FileViewOwncloudPlugin::socketStateChanged(QAbstractSocket::SocketState newState)
+{
+    if (newState == QAbstractSocket::ConnectedState) {
+        emit itemVersionsChanged();
+	d->reconnectTimer->stop();
+        return;
+    }
+
+    if (newState == QAbstractSocket::UnconnectedState) {
+	if (!d->reconnectTimer->isActive())
+	    d->reconnectTimer->start(5000);
     }
 }
 
@@ -140,6 +164,15 @@ FileViewOwncloudPlugin::itemVersion (const KFileItem &item) const
         }
     }
     return UnversionedVersion;
+}
+
+void FileViewOwncloudPlugin::reconnect()
+{
+    // qDebug() << "reconnect:" << d->ocNotifySocket->state();
+    if (d->ocNotifySocket->state() != QAbstractSocket::ConnectedState) {
+	d->reconnectTimer->setInterval(30000);
+	d->ocNotifySocket->connectToHost(QHostAddress::LocalHost, 33001, QIODevice::ReadWrite);
+    }
 }
 
 FileViewOwncloudPlugin::Private::OcMessage::OcMessage(const QByteArray& response)

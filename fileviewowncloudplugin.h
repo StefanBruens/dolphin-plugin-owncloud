@@ -22,6 +22,7 @@
 
 #include <kversioncontrolplugin2.h>
 // #include <QLocalSocket>
+#include <QAbstractSocket>
 
 class FileViewOwncloudPlugin : public KVersionControlPlugin2 {
     Q_OBJECT
@@ -42,6 +43,8 @@ private:
 
 private slots:
     void handleOcNotify();
+    void reconnect();
+    void socketStateChanged(QAbstractSocket::SocketState newState);
 };
 
 #endif
