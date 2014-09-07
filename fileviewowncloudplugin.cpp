@@ -15,6 +15,12 @@ K_EXPORT_PLUGIN(FileViewOwncloudPluginFactory("fileviewowncloudplugin"))
 class FileViewOwncloudPlugin::Private
 {
 public:
+    Private(FileViewOwncloudPlugin* parent)
+        : ocNotifySocket(new QTcpSocket(parent))
+    {
+    }
+
+    QPointer<QTcpSocket> ocNotifySocket;
     QPointer<QTcpSocket> ocQuerySocket;
     class OcMessage
     {
@@ -47,6 +53,8 @@ FileViewOwncloudPlugin::FileViewOwncloudPlugin(QObject* parent, const QList<QVar
 {
     // qDebug() << "OCP: started oc plugin";
 
+    connect(d->ocNotifySocket, SIGNAL(readyRead()), this, SLOT(handleOcNotify()));
+    d->ocNotifySocket->connectToHost(QHostAddress::LocalHost, 33001, QIODevice::ReadWrite);
 }
 
 FileViewOwncloudPlugin::~FileViewOwncloudPlugin()
@@ -59,6 +67,23 @@ QList<QAction*>
 FileViewOwncloudPlugin::actions (const KFileItemList &items) const
 {
     return QList<QAction*>();
+}
+
+void FileViewOwncloudPlugin::handleOcNotify()
+{
+    QByteArray notification = d->ocNotifySocket->readAll();
+    // qDebug() << "OCP: notify -> " << notification;
+
+    QList<QByteArray> lines = notification.split('\n');
+    foreach (const QByteArray& line, lines) {
+        if (line.isEmpty())
+            continue;
+
+        Private::OcMessage message(line);
+        if (message.type == Private::OcMessage::UPDATE_VIEW) {
+            emit itemVersionsChanged();
+        }
+    }
 }
 
 bool

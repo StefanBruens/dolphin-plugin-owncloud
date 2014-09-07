@@ -24,6 +24,7 @@
 // #include <QLocalSocket>
 
 class FileViewOwncloudPlugin : public KVersionControlPlugin2 {
+    Q_OBJECT
 
 public:
     FileViewOwncloudPlugin(QObject* parent, const QList<QVariant>& args);
@@ -39,6 +40,8 @@ private:
     class Private;
     Private* d;
 
+private slots:
+    void handleOcNotify();
 };
 
 #endif
